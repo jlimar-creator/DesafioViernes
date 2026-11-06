@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoHuerto La Paz | Simulación EDO de Primer Orden - Métodos Numéricos</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .math-box {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom scrollbar for wide numerical tables */
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    .water-wave {
+      transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-emerald-600 selection:text-white">
+
+  <!-- TOP INSTITUTIONAL & AUTHOR HEADER -->
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md text-white border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-2">
+        <!-- Brand & Project Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-950 shrink-0">
+            <svg class="w-6 h-6 text-slate-950" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full">
+                Desafío Individual EDO · PVI
+              </span>
+              <span class="px-2 py-0.5 text-[11px] font-medium bg-slate-800 text-slate-300 rounded-full">
+                Cotahuma, La Paz
+              </span>
+            </div>
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white leading-snug">
+              EcoHuerto La Paz: Simulación de Reserva Hídrica Comunitaria
+            </h1>
+          </div>
+        </div>
+
+        <!-- Student / Course Metadata -->
+        <div class="flex flex-wrap items-center gap-3 text-xs bg-slate-800/90 border border-slate-700/80 px-3.5 py-2 rounded-xl">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Autor / Estudiante</span>
+            <span class="font-semibold text-emerald-300">Joseph Lima Ramos</span>
+          </div>
+          <div class="h-6 w-px bg-slate-700 hidden sm:block"></div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Carrera · Universidad</span>
+            <span class="font-medium text-slate-200">Ingeniería de Sistemas · UMSA</span>
+          </div>
+          <div class="h-6 w-px bg-slate-700 hidden sm:block"></div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase tracking-wider">Asignatura</span>
+            <span class="font-medium text-amber-300">Métodos Numéricos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Bar -->
+      <nav class="flex items-center gap-1 overflow-x-auto py-2 border-t border-slate-800/80 text-xs font-medium no-scrollbar">
+        <a href="#contexto" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition whitespace-nowrap">1. Problema y Modelo EDO</a>
+        <a href="#analitica" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition whitespace-nowrap">2. Solución Analítica y Verificación</a>
+        <a href="#simulador" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 transition whitespace-nowrap">3. Simulador Interactivo</a>
+        <a href="#graficas" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition whitespace-nowrap">4. Gráficas y Errores</a>
+        <a href="#comparativa-pasos" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition whitespace-nowrap">5. Comparación h₁ vs h₂</a>
+        <a href="#tabla-iteraciones" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition whitespace-nowrap">6. Tabla Paso a Paso</a>
+        <a href="#conclusiones" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition whitespace-nowrap">7. Interpretación y Conclusiones</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+    <!-- HERO BANNER: THE CHALLENGE GUIDING QUESTION -->
+    <section class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-emerald-950 to-teal-950 text-white p-6 sm:p-8 shadow-xl border border-emerald-800/40">
+      <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div class="lg:col-span-8 space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold">
+            <span>🌱 Bienestar Comunitario · Seguridad Alimentaria e Hídrica</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            Modelado Dinámico de Captación y Almacenamiento Hídrico mediante EDO de Primer Orden
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Estudio numérico comparativo entre la <strong>Solución Analítica Exacta</strong>, el <strong>Método de Heun (Runge-Kutta de 2.º Orden)</strong> y el <strong>Método Clásico de Runge-Kutta de 4.º Orden (RK4)</strong> aplicado a la gestión de agua para riego tecnificado en el huerto urbano vecinal de Cotahuma, La Paz.
+          </p>
+          <div class="p-3.5 rounded-xl bg-slate-900/70 border border-emerald-500/30 text-xs sm:text-sm text-emerald-100">
+            <strong class="text-emerald-400 uppercase tracking-wider block text-[11px] mb-1">Pregunta Cuantificable del Desafío:</strong>
+            ¿En cuántas semanas (<span class="math-box">t*</span>) logrará la cisterna comunitaria alcanzar el umbral crítico de seguridad hídrica de <span id="hero-meta-text" class="math-box font-bold text-white">6500 L</span> (dentro de un horizonte de <span id="hero-horizon-text" class="math-box font-bold text-white">12 semanas</span>) para ampliar los cultivos vecinales de 40 a 80 parcelas familiares, y qué nivel de exactitud brindan los métodos de Heun y RK4 al variar el tamaño de paso (<span class="math-box">h₁</span> vs <span class="math-box">h₂</span>)?
+          </div>
+        </div>
+
+        <!-- Visual Cistern Tank Indicator -->
+        <div class="lg:col-span-4 flex flex-col items-center justify-center bg-slate-900/80 border border-slate-700/80 rounded-2xl p-4 shadow-inner">
+          <div class="w-full flex items-center justify-between text-xs text-slate-300 mb-2">
+            <span class="font-semibold">Estado Simulado Cisterna (t = T)</span>
+            <span id="tank-badge-status" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">Meta Alcanzada</span>
+          </div>
+          <!-- Tank Graphic -->
+          <div class="relative w-40 h-44 rounded-b-2xl rounded-t-lg border-4 border-slate-500 bg-slate-950 overflow-hidden shadow-lg flex flex-col justify-end">
+            <!-- Equilibrium Line -->
+            <div class="absolute top-2 inset-x-0 border-t border-dashed border-cyan-400/70 z-20 flex justify-end pr-1.5">
+              <span class="text-[9px] font-mono text-cyan-300 bg-slate-950/80 px-1 rounded">Eq: <span id="tank-eq-label">7200</span>L</span>
+            </div>
+            <!-- Goal Threshold Line -->
+            <div id="tank-goal-line" class="absolute inset-x-0 border-t-2 border-dashed border-amber-400 z-20 flex justify-between px-1.5" style="bottom: 82%;">
+              <span class="text-[9px] font-mono font-bold text-amber-300 bg-slate-950/90 px-1 rounded">Meta: <span id="tank-meta-label">6500</span>L</span>
+            </div>
+            <!-- Water Fill Level -->
+            <div id="tank-water-fill" class="water-wave w-full bg-gradient-to-t from-teal-600 via-emerald-500 to-cyan-400/90 relative z-10 flex items-center justify-center" style="height: 86%;">
+              <div class="text-center drop-shadow">
+                <span id="tank-current-vol" class="font-mono font-extrabold text-lg text-slate-950 block leading-none">6901 L</span>
+                <span id="tank-current-pct" class="font-mono text-[10px] font-bold text-slate-900">95.9% del eq.</span>
+              </div>
+            </div>
+          </div>
+          <div class="w-full mt-3 grid grid-cols-2 gap-2 text-center text-[11px]">
+            <div class="bg-slate-800/90 rounded-lg p-1.5 border border-slate-700">
+              <span class="text-slate-400 block">Inicial y(0)</span>
+              <span id="tank-init-label" class="font-mono font-bold text-white">1200 L</span>
+            </div>
+            <div class="bg-slate-800/90 rounded-lg p-1.5 border border-slate-700">
+              <span class="text-slate-400 block">Semana Meta t*</span>
+              <span id="tank-tstar-label" class="font-mono font-bold text-emerald-300">8.59 sem</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: PROBLEMA, CONTEXTO Y MODELO MATEMÁTICO (3a & 3b) -->
+    <section id="contexto" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- 3a) Problema y Contexto Comunitario -->
+      <div class="lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span>3a. Problema y Contexto Comunitario</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">
+            Seguridad Hídrica en el "EcoHuerto Vecinal Cotahuma"
+          </h3>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            <strong>Población beneficiaria:</strong> 60 familias de la junta vecinal de las laderas de Cotahuma (La Paz) que gestionan de forma autogestionaria un huerto urbano agroecológico para autoconsumo y ahorro familiar.
+          </p>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            <strong>Problema específico:</strong> Al iniciar el periodo de transición hacia la época seca, la comunidad necesita acumular agua en su cisterna principal de biofiltración. Actualmente riegan 40 parcelas, pero para habilitar <strong>80 parcelas familiares</strong> sin riesgo de estrés hídrico, el comité técnico requiere que la cisterna alcance un volumen mínimo de reserva de <strong class="text-emerald-700">6500 Litros</strong> antes de concluir la semana 12.
+          </p>
+        </div>
+
+        <div class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-4 space-y-2 text-xs text-slate-700">
+          <div class="font-bold text-emerald-900 flex items-center gap-1.5">
+            <span>📌 Supuestos del Modelo y Condiciones de Calidad:</span>
+          </div>
+          <ul class="list-disc list-inside space-y-1 text-slate-600">
+            <li><strong>Captación constante (<span class="math-box">I</span>):</strong> Aporte promedio regularizado por conducción de vertiente local y cosecha pluvial canalizada (<span class="math-box">L/semana</span>).</li>
+            <li><strong>Extracción proporcional (<span class="math-box">k·y</span>):</strong> El caudal de salida por riego por goteo gravitacional y retrolavado de biofiltros es proporcional a la carga hidráulica/volumen disponible en la cisterna.</li>
+            <li><strong>Declaración metodológica:</strong> Los parámetros representan un escenario verosímil de ingeniería comunitaria a escala vecinal para evaluar la precisión numérica de Heun y RK4.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 3b) Formulación del Modelo EDO de Primer Orden -->
+      <div class="lg:col-span-7 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center gap-2 text-teal-700 font-bold text-xs uppercase tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+            <span>3b. Modelo Matemático: EDO de Primer Orden con PVI</span>
+          </div>
+          <span class="text-xs font-mono bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md border border-slate-200">
+            Balance de Masa Hidrológico
+          </span>
+        </div>
+
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Por el principio de conservación de masa en un reservorio de volumen variable, la tasa de cambio instantánea del volumen de agua almacenada <span class="math-box font-semibold text-slate-800">dy/dt</span> es igual a la tasa de entrada menos la tasa de salida:
+        </p>
+
+        <!-- Ecuación destacada -->
+        <div class="bg-slate-900 text-white rounded-xl p-4 border border-slate-800 shadow-inner flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="space-y-1 text-center sm:text-left">
+            <span class="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold block">Ecuación Diferencial Ordinaria (PVI)</span>
+            <div class="math-box text-lg sm:text-xl font-bold text-white tracking-wide">
+              dy/dt = f(t, y) = I - k · y(t) , &nbsp; y(0) = y₀
+            </div>
+          </div>
+          <div class="bg-slate-800/90 border border-slate-700 px-3.5 py-2 rounded-lg text-xs math-box text-emerald-300 shrink-0">
+            <div id="dynamic-ode-string">dy/dt = 1800 - 0.25·y(t)</div>
+            <div id="dynamic-ic-string" class="text-slate-300">y(0) = 1200 L , t ∈ [0, 12]</div>
+          </div>
+        </div>
+
+        <!-- Tabla de Variables y Parámetros con Unidades -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase">
+                <th class="py-2 px-3 font-semibold">Símbolo</th>
+                <th class="py-2 px-3 font-semibold">Tipo de Elemento</th>
+                <th class="py-2 px-3 font-semibold">Descripción Física / Comunitaria</th>
+                <th class="py-2 px-3 font-semibold">Unidades</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 text-slate-700">
+              <tr>
+                <td class="py-2 px-3 math-box font-bold text-slate-900">t</td>
+                <td class="py-2 px-3"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">Var. Independiente</span></td>
+                <td class="py-2 px-3">Tiempo transcurrido desde el inicio del plan hídrico</td>
+                <td class="py-2 px-3 math-box">semanas (sem)</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 math-box font-bold text-emerald-700">y(t)</td>
+                <td class="py-2 px-3"><span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium">Var. Dependiente</span></td>
+                <td class="py-2 px-3">Volumen de agua biofiltrada en la cisterna en el tiempo <span class="math-box">t</span></td>
+                <td class="py-2 px-3 math-box">Litros (L)</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 math-box font-bold text-slate-900">y₀</td>
+                <td class="py-2 px-3"><span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 font-medium">Condición Inicial</span></td>
+                <td class="py-2 px-3">Reserva de agua inicial disponible en <span class="math-box">t = 0</span></td>
+                <td class="py-2 px-3 math-box">Litros (L)</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 math-box font-bold text-slate-900">I</td>
+                <td class="py-2 px-3"><span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-medium">Parámetro Entrada</span></td>
+                <td class="py-2 px-3">Caudal constante de captación (vertiente + lluvia)</td>
+                <td class="py-2 px-3 math-box">L / semana</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 math-box font-bold text-slate-900">k</td>
+                <td class="py-2 px-3"><span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-medium">Parámetro Salida</span></td>
+                <td class="py-2 px-3">Coeficiente proporcional de uso por riego y filtración</td>
+                <td class="py-2 px-3 math-box">1 / semana (sem⁻¹)</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 math-box font-bold text-slate-900">h₁, h₂</td>
+                <td class="py-2 px-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">Paso Numérico</span></td>
+                <td class="py-2 px-3">Tamaño de paso temporal para discretización en Heun y RK4</td>
+                <td class="py-2 px-3 math-box">semanas (sem)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: SOLUCIÓN ANALÍTICA EXACTA Y VERIFICACIÓN POR SUSTITUCIÓN (3c) -->
+    <section id="analitica" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+        <div>
+          <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+            <span>3c. Solución Analítica Exacta y Verificación por Sustitución</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mt-1">
+            Deducción Exacta por Factor Integrante y Comprobación Dinámica
+          </h3>
+        </div>
+        <span class="text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1.5 rounded-lg">
+          ✓ Actualizada en tiempo real con tus parámetros
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 text-xs sm:text-sm">
+        <!-- Paso 1: Resolución Analítica -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2.5">
+          <div class="font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-slate-900 text-white text-xs flex items-center justify-center font-mono">1</span>
+            <span>Resolución Analítica Exacta</span>
+          </div>
+          <p class="text-slate-600 text-xs leading-relaxed">
+            Reordenando la EDO lineal de primer orden a su forma estándar y aplicando el factor integrante <span class="math-box font-semibold">μ(t) = e^(k·t)</span>:
+          </p>
+          <div class="bg-white p-3 rounded-lg border border-slate-200 math-box text-xs space-y-1.5 text-slate-800">
+            <div>dy/dt + k·y = I</div>
+            <div>d/dt [ y(t)·e^(kt) ] = I·e^(kt)</div>
+            <div>y(t)·e^(kt) = (I/k)·e^(kt) + C</div>
+            <div class="pt-1 border-t border-slate-100 font-bold text-emerald-700">
+              y(t) = (I/k) + (y₀ - I/k)·e^(-k·t)
+            </div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-emerald-950 text-emerald-200 math-box text-xs">
+            <span class="text-[10px] uppercase tracking-wider text-emerald-400 block">Función Exacta Actual:</span>
+            <span id="analytic-formula-current" class="font-bold text-white">y(t) = 7200 + (-6000)·e^(-0.25·t)</span>
+          </div>
+        </div>
+
+        <!-- Paso 2: Comprobación de la Condición Inicial -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2.5">
+          <div class="font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center font-mono">2</span>
+            <span>Sustitución de Condición Inicial t = 0</span>
+          </div>
+          <p class="text-slate-600 text-xs leading-relaxed">
+            Evaluamos la solución analítica en <span class="math-box font-semibold">t = 0</span> sabiendo que <span class="math-box">e^(-k·0) = e^0 = 1</span>:
+          </p>
+          <div class="bg-white p-3 rounded-lg border border-slate-200 math-box text-xs space-y-1.5 text-slate-800">
+            <div>y(0) = (I/k) + (y₀ - I/k)·e^(0)</div>
+            <div>y(0) = (I/k) + y₀ - (I/k) = y₀</div>
+            <div id="verify-ic-numeric" class="pt-1 border-t border-slate-100 font-bold text-emerald-700">
+              y(0) = 7200 + (1200 - 7200)·(1) = 1200 L ✓
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Queda verificado que la solución analítica satisface de forma exacta la condición inicial <span class="math-box">y(0) = y₀</span>.
+          </p>
+        </div>
+
+        <!-- Paso 3: Comprobación por Sustitución en la EDO -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2.5">
+          <div class="font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-teal-600 text-white text-xs flex items-center justify-center font-mono">3</span>
+            <span>Sustitución en la EDO (MI = MD)</span>
+          </div>
+          <p class="text-slate-600 text-xs leading-relaxed">
+            Derivamos <span class="math-box">y(t)</span> (Miembro Izquierdo) y sustituimos <span class="math-box">y(t)</span> en <span class="math-box">I - k·y(t)</span> (Miembro Derecho):
+          </p>
+          <div class="bg-white p-3 rounded-lg border border-slate-200 math-box text-xs space-y-1.5 text-slate-800">
+            <div><strong class="text-teal-700">MI:</strong> dy/dt = -k·(y₀ - I/k)·e^(-kt)</div>
+            <div><strong class="text-indigo-700">MD:</strong> I - k·[(I/k) + (y₀ - I/k)·e^(-kt)]</div>
+            <div><strong class="text-indigo-700">MD:</strong> I - I - k·(y₀ - I/k)·e^(-kt)</div>
+            <div id="verify-ode-numeric" class="pt-1 border-t border-slate-100 font-bold text-emerald-700">
+              En t=6 sem: MI = 334.6952 L/sem = MD ✓
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Ambos miembros son idénticos para todo <span class="math-box">t ≥ 0</span>, confirmando la validez exacta de la solución.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: PANEL DE SIMULACIÓN INTERACTIVA (4) -->
+    <section id="simulador" class="bg-white rounded-2xl p-6 shadow-md border-2 border-emerald-500/30 space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>4. Panel de Simulación Interactiva y Configuración de Parámetros</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mt-1">
+            Control de Parámetros del Modelo, Condición Inicial y Tamaños de Paso (<span class="math-box">h₁</span> vs <span class="math-box">h₂</span>)
+          </h3>
+        </div>
+
+        <!-- Preset Scenario Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-semibold text-slate-500 mr-1">Escenarios Rápidos:</span>
+          <button type="button" onclick="applyPreset('base')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm">
+            Escenario Base (h₁=1, h₂=2)
+          </button>
+          <button type="button" onclick="applyPreset('fino')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-200 hover:bg-teal-100 transition">
+            Paso Fino (h₁=0.5, h₂=1)
+          </button>
+          <button type="button" onclick="applyPreset('sequia')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition">
+            Sequía Estacional (I=1450)
+          </button>
+          <button type="button" onclick="applyPreset('ampliacion')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition">
+            Cosecha Pluvial Extra (I=2100)
+          </button>
+        </div>
+      </div>
+
+      <!-- VALIDATION ALERT BANNER (Hidden when valid) -->
+      <div id="validation-banner" class="hidden rounded-xl bg-rose-50 border border-rose-300 p-4 text-rose-900 text-sm flex items-start gap-3">
+        <svg class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <div>
+          <strong class="font-bold block">Validación de Parámetros de Entrada:</strong>
+          <p id="validation-message" class="text-xs mt-0.5"></p>
+        </div>
+      </div>
+
+      <!-- Parameter Inputs Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Input 1: Condición inicial y0 -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="input-y0" class="text-xs font-bold text-slate-700">Reserva Inicial <span class="math-box text-emerald-700">y₀</span></label>
+            <span class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-600">Litros (L)</span>
+          </div>
+          <input id="input-y0" type="number" step="50" min="0" max="50000" value="1200"
+            class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+          <p class="text-[11px] text-slate-500">Volumen en <span class="math-box">t = 0</span> (Rango: 0 a 50,000 L)</p>
+        </div>
+
+        <!-- Input 2: Tasa de captación I -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="input-I" class="text-xs font-bold text-slate-700">Tasa de Captación <span class="math-box text-emerald-700">I</span></label>
+            <span class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-600">L / semana</span>
+          </div>
+          <input id="input-I" type="number" step="50" min="10" max="50000" value="1800"
+            class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+          <p class="text-[11px] text-slate-500">Ingreso por vertiente y lluvia (&gt; 0)</p>
+        </div>
+
+        <!-- Input 3: Coeficiente de extracción k -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="input-k" class="text-xs font-bold text-slate-700">Coef. Extracción <span class="math-box text-rose-600">k</span></label>
+            <span class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-600">1 / semana</span>
+          </div>
+          <input id="input-k" type="number" step="0.01" min="0.01" max="5" value="0.25"
+            class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+          <p class="text-[11px] text-slate-500">Tasa proporcional de riego/uso (0.01 a 5.0)</p>
+        </div>
+
+        <!-- Input 4: Meta Comunitaria y_meta -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="input-meta" class="text-xs font-bold text-slate-700">Meta Comunitaria <span class="math-box text-amber-600">y_meta</span></label>
+            <span class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-600">Litros (L)</span>
+          </div>
+          <input id="input-meta" type="number" step="100" min="100" max="50000" value="6500"
+            class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+          <p class="text-[11px] text-slate-500">Umbral para habilitar 80 parcelas</p>
+        </div>
+
+        <!-- Input 5: Tiempo de Simulación T -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="input-T" class="text-xs font-bold text-slate-700">Horizonte Temporal <span class="math-box text-blue-600">T</span></label>
+            <span class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-600">semanas</span>
+          </div>
+          <input id="input-T" type="number" step="1" min="1" max="100" value="12"
+            class="w-full px-3 py-2 rounded-lg border border-slate-300 font-mono text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white" />
+          <p class="text-[11px] text-slate-500">Intervalo de simulación <span class="math-box">[0, T]</span></p>
+        </div>
+
+        <!-- Input 6: Tamaño de paso principal h1 -->
+        <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="input-h1" class="text-xs font-bold text-emerald-900">Tamaño de Paso 1 <span class="math-box text-emerald-700">h₁</span></label>
+            <span class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-emerald-200 text-emerald-800">semanas</span>
+          </div>
+          <input id="input-h1" type="number" step="0.25" min="0.05" max="20" value="1.0"
+            class="w-full px-3 py-2 rounded-lg border border-emerald-300 font-mono text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white" />
+          <p class="text-[11px] text-emerald-800">Paso principal de simulación (ej. 1.0 sem)</p>
+        </div>
+
+        <!-- Input 7: Tamaño de paso comparativo h2 -->
+        <div class="bg-indigo-50/70 p-4 rounded-xl border border-indigo-200 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label for="input-h2" class="text-xs font-bold text-indigo-900">Tamaño de Paso 2 <span class="math-box text-indigo-700">h₂</span></label>
+            <span class="text-[11px] font-mono bg-white px-2 py-0.5 rounded border border-indigo-200 text-indigo-800">semanas</span>
+          </div>
+          <input id="input-h2" type="number" step="0.25" min="0.05" max="20" value="2.0"
+            class="w-full px-3 py-2 rounded-lg border border-indigo-300 font-mono text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-600 bg-white" />
+          <p class="text-[11px] text-indigo-800">Paso de contraste para análisis de convergencia</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col justify-between gap-2">
+          <div class="text-xs text-slate-300">
+            Ejecuta simultáneamente <strong>Heun (RK2)</strong> y <strong>RK4</strong> en ambas mallas (<span class="math-box">h₁</span> y <span class="math-box">h₂</span>).
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="runSimulation()" class="flex-1 py-2.5 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition shadow-md">
+              ▶ Ejecutar Simulación
+            </button>
+            <button type="button" onclick="applyPreset('base')" title="Restablecer valores por defecto" class="py-2.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700 transition">
+              Reiniciar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI SUMMARY CARDS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-2">
+        <!-- KPI 1: Volumen exacto en t = T -->
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">Volumen Exacto y(T)</span>
+          <div id="kpi-exact-T" class="text-2xl font-extrabold font-mono text-slate-900 mt-1">6901.28 L</div>
+          <span id="kpi-eq-sub" class="text-xs text-slate-500 mt-1 block">Equilibrio I/k = 7200.00 L</span>
+        </div>
+
+        <!-- KPI 2: Semana en que se alcanza la meta t* -->
+        <div class="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 block">Tiempo a la Meta (t*)</span>
+          <div id="kpi-tstar" class="text-2xl font-extrabold font-mono text-emerald-700 mt-1">8.59 sem</div>
+          <span id="kpi-tstar-sub" class="text-xs text-emerald-800 mt-1 block">≈ 8 sem y 4.2 días (Lograda)</span>
+        </div>
+
+        <!-- KPI 3: Error Máximo Heun (h1) -->
+        <div class="p-4 rounded-xl bg-amber-50/70 border border-amber-200">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-900 block">Error Máx. Heun (h₁)</span>
+          <div id="kpi-err-heun" class="text-2xl font-extrabold font-mono text-amber-700 mt-1">6.6317 L</div>
+          <span id="kpi-err-heun-rel" class="text-xs text-amber-800 font-mono mt-1 block">Error Rel. Máx: 0.251240%</span>
+        </div>
+
+        <!-- KPI 4: Error Máximo RK4 (h1) -->
+        <div class="p-4 rounded-xl bg-teal-50/70 border border-teal-200">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-teal-900 block">Error Máx. RK4 (h₁)</span>
+          <div id="kpi-err-rk4" class="text-2xl font-extrabold font-mono text-teal-700 mt-1">0.0160 L</div>
+          <span id="kpi-err-rk4-rel" class="text-xs text-teal-800 font-mono mt-1 block">Error Rel. Máx: 0.000607%</span>
+        </div>
+
+        <!-- KPI 5: Factor de Ventaja de RK4 sobre Heun -->
+        <div class="p-4 rounded-xl bg-slate-900 text-white border border-slate-800">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-400 block">Precisión RK4 vs Heun</span>
+          <div id="kpi-ratio-advantage" class="text-2xl font-extrabold font-mono text-white mt-1">414.1×</div>
+          <span class="text-xs text-slate-300 mt-1 block">Menor error con el mismo paso h₁</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: VISUALIZACIÓN GRÁFICA INTERACTIVA (3e) -->
+    <section id="graficas" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Gráfica 1: Curvas de Evolución de Reserva Hídrica y(t) -->
+      <div class="lg:col-span-7 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 block">Gráfica 1 · Solución del PVI</span>
+            <h3 class="text-lg font-bold text-slate-900">Evolución del Volumen de Agua <span class="math-box">y(t)</span> vs Tiempo <span class="math-box">t</span></h3>
+          </div>
+          <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-mono">
+            Analítica vs Heun vs RK4
+          </span>
+        </div>
+
+        <div class="relative w-full h-80 sm:h-96">
+          <canvas id="chartTrajectory"></canvas>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+          <span>💡 Puedes activar/desactivar series haciendo clic en su leyenda superior.</span>
+          <span class="font-mono text-slate-700">Unidades: Eje X [semanas] · Eje Y [Litros]</span>
+        </div>
+      </div>
+
+      <!-- Gráfica 2: Evolución del Error Numérico -->
+      <div class="lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-rose-600 block">Gráfica 2 · Análisis de Error</span>
+            <h3 class="text-lg font-bold text-slate-900">Error frente a la Solución Analítica</h3>
+          </div>
+          <!-- Controles de Escala y Tipo de Error -->
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <select id="error-metric-select" onchange="updateErrorChart()" class="text-xs font-semibold bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 focus:outline-none">
+              <option value="rel">Error Relativo (%)</option>
+              <option value="abs">Error Absoluto (L)</option>
+            </select>
+            <select id="error-scale-select" onchange="updateErrorChart()" class="text-xs font-semibold bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-800 focus:outline-none">
+              <option value="logarithmic">Escala Log₁₀</option>
+              <option value="linear">Escala Lineal</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="relative w-full h-80 sm:h-96">
+          <canvas id="chartError"></canvas>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 leading-relaxed">
+          En <strong>Escala Log₁₀</strong> se visualiza con total claridad cómo <strong>RK4</strong> se sitúa varios órdenes de magnitud por debajo del error de <strong>Heun</strong> tanto para <span class="math-box">h₁</span> como para <span class="math-box">h₂</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: COMPARACIÓN DE DOS TAMAÑOS DE PASO (h1 vs h2) Y FORMULACIÓN NUMÉRICA (3d & 3e) -->
+    <section id="comparativa-pasos" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+        <div>
+          <div class="flex items-center gap-2 text-indigo-700 font-bold text-xs uppercase tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+            <span>3d y 3e. Comparación Cuantitativa de Tamaños de Paso (h₁ vs h₂)</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mt-1">
+            Efecto del Tamaño de Paso <span class="math-box">h</span> sobre el Error de Truncamiento Global
+          </h3>
+        </div>
+        <span class="text-xs font-mono bg-indigo-50 text-indigo-800 border border-indigo-200 px-3 py-1.5 rounded-lg">
+          Heun: Orden O(h²) · RK4: Orden O(h⁴)
+        </span>
+      </div>
+
+      <!-- Resumen de Fórmulas de Heun y RK4 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-4 rounded-xl bg-amber-50/50 border border-amber-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <strong class="text-sm text-amber-950">Método de Heun (Runge-Kutta de 2.º Orden)</strong>
+            <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-mono font-semibold">Error Global O(h²)</span>
+          </div>
+          <p class="text-slate-600">Método predictor-corrector que promedia la pendiente inicial (Euler) con la pendiente al final del paso:</p>
+          <div class="bg-white p-3 rounded-lg border border-amber-200 math-box space-y-1 text-slate-800">
+            <div>k₁ = f(tₙ, yₙ) = I - k·yₙ</div>
+            <div>y*ₙ₊₁ = yₙ + h·k₁ &nbsp;<span class="text-slate-400">(Predictor de Euler)</span></div>
+            <div>k₂ = f(tₙ + h, y*ₙ₊₁) = I - k·y*ₙ₊₁</div>
+            <div class="font-bold text-amber-800 pt-1 border-t border-slate-100">yₙ₊₁ = yₙ + (h / 2)·(k₁ + k₂)</div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-teal-50/50 border border-teal-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <strong class="text-sm text-teal-950">Método Clásico de Runge-Kutta de 4.º Orden (RK4)</strong>
+            <span class="px-2 py-0.5 rounded bg-teal-100 text-teal-800 font-mono font-semibold">Error Global O(h⁴)</span>
+          </div>
+          <p class="text-slate-600">Evalúa cuatro pendientes ponderadas (inicio, dos en el punto medio y final del subintervalo):</p>
+          <div class="bg-white p-3 rounded-lg border border-teal-200 math-box space-y-1 text-slate-800">
+            <div>k₁ = f(tₙ, yₙ) &nbsp;|&nbsp; k₂ = f(tₙ + h/2, yₙ + (h/2)·k₁)</div>
+            <div>k₃ = f(tₙ + h/2, yₙ + (h/2)·k₂) &nbsp;|&nbsp; k₄ = f(tₙ + h, yₙ + h·k₃)</div>
+            <div class="font-bold text-teal-800 pt-1 border-t border-slate-100">yₙ₊₁ = yₙ + (h / 6)·(k₁ + 2k₂ + 2k₃ + k₄)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla Comparativa h1 vs h2 -->
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+          <thead>
+            <tr class="bg-slate-900 text-white">
+              <th class="py-3 px-4 font-semibold rounded-tl-xl">Métrica / Indicador de Desempeño</th>
+              <th id="th-step1" class="py-3 px-4 font-semibold text-emerald-300 font-mono">Paso Principal h₁ = 1.0 sem</th>
+              <th id="th-step2" class="py-3 px-4 font-semibold text-indigo-300 font-mono">Paso Comparativo h₂ = 2.0 sem</th>
+              <th class="py-3 px-4 font-semibold rounded-tr-xl">Análisis de Convergencia</th>
+            </tr>
+          </thead>
+          <tbody id="step-comparison-tbody" class="divide-y divide-slate-200 text-slate-700 font-mono text-xs">
+            <!-- Populated dynamically by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 6: TABLA DE ITERACIONES PASO A PASO E INSPECTOR DE PENDIENTES (3e) -->
+    <section id="tabla-iteraciones" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+          <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+            <span>3e. Tabla Comparativa por Pasos / Iteraciones</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mt-1">
+            Resultados Paso a Paso: Solución Analítica, Heun, RK4 y Errores
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Haz clic sobre cualquier fila de la tabla para inspeccionar el cálculo detallado de las pendientes <span class="math-box">k₁, k₂, k₃, k₄</span> en esa iteración.
+          </p>
+        </div>
+
+        <!-- Table Controls: Step selector, Decimal selector, CSV export -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Toggle h1 / h2 table -->
+          <div class="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-100">
+            <button type="button" id="btn-table-h1" onclick="setTableStepMode('h1')" class="px-3 py-1.5 rounded-md text-xs font-bold bg-emerald-600 text-white shadow-sm transition">
+              Ver Malla h₁ (<span id="lbl-btn-h1">1.0</span> sem)
+            </button>
+            <button type="button" id="btn-table-h2" onclick="setTableStepMode('h2')" class="px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:text-slate-900 transition">
+              Ver Malla h₂ (<span id="lbl-btn-h2">2.0</span> sem)
+            </button>
+          </div>
+
+          <!-- Decimals selector -->
+          <select id="decimal-select" onchange="renderIterationTable()" class="text-xs font-semibold bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-slate-800">
+            <option value="4">4 decimales</option>
+            <option value="6" selected>6 decimales</option>
+            <option value="8">8 decimales</option>
+          </select>
+
+          <!-- CSV Export -->
+          <button type="button" onclick="exportTableCSV()" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition flex items-center gap-1.5 shadow-sm">
+            <span>⬇ Exportar CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE STEP INSPECTOR PANEL (Shows intermediate k1, k2, k3, k4 for selected step) -->
+      <div id="step-inspector" class="rounded-xl bg-slate-900 text-white p-4 border border-slate-800 shadow-inner">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-xs font-bold" id="inspector-badge">
+              Inspector de Iteración: Paso n = 1
+            </span>
+            <span class="text-xs text-slate-300" id="inspector-subtitle">
+              Transición desde t₀ = 0.00 sem hacia t₁ = 1.00 sem (h = 1.00 sem)
+            </span>
+          </div>
+          <span class="text-[11px] text-slate-400">Selecciona otra fila en la tabla inferior para auditar sus cálculos</span>
+        </div>
+        <div id="inspector-content" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs math-box">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- Iteration Table -->
+      <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200 uppercase font-semibold">
+              <th class="py-3 px-3 text-center">Paso n</th>
+              <th class="py-3 px-3">Tiempo tₙ (sem)</th>
+              <th class="py-3 px-3 bg-emerald-50/80 text-emerald-950">y Exacta (L)</th>
+              <th class="py-3 px-3 bg-amber-50/80 text-amber-950">y Heun (L)</th>
+              <th class="py-3 px-3 bg-amber-50/40 text-amber-900">Err. Abs Heun (L)</th>
+              <th class="py-3 px-3 bg-amber-50/40 text-amber-900">Err. Rel Heun (%)</th>
+              <th class="py-3 px-3 bg-teal-50/80 text-teal-950">y RK4 (L)</th>
+              <th class="py-3 px-3 bg-teal-50/40 text-teal-900">Err. Abs RK4 (L)</th>
+              <th class="py-3 px-3 bg-teal-50/40 text-teal-900">Err. Rel RK4 (%)</th>
+            </tr>
+          </thead>
+          <tbody id="iteration-tbody" class="divide-y divide-slate-200 font-mono text-slate-800">
+            <!-- Populated dynamically by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 7: INTERPRETACIÓN COMUNITARIA, LIMITACIONES Y CONCLUSIONES (3f) -->
+    <section id="conclusiones" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Interpretación en lenguaje sencillo para la comunidad -->
+      <div class="lg:col-span-7 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+        <div class="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          <span>3f. Interpretación de Resultados para la Comunidad de Cotahuma</span>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900">
+          ¿Qué significan estos resultados para las familias del EcoHuerto?
+        </h3>
+
+        <div id="community-interpretation-box" class="space-y-3 text-sm text-slate-700 leading-relaxed">
+          <!-- Populated dynamically by JS according to current parameters -->
+        </div>
+
+        <!-- Resumen de Capacidad de Parcelas -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+            <span class="text-[11px] font-semibold uppercase text-emerald-800 block">Estado de la Meta</span>
+            <span id="concl-goal-status" class="text-base font-extrabold text-emerald-900 mt-0.5 block">✓ Meta Superada</span>
+            <span id="concl-goal-detail" class="text-xs text-emerald-700">Se alcanza en la semana 8.59</span>
+          </div>
+          <div class="p-3.5 rounded-xl bg-teal-50 border border-teal-200">
+            <span class="text-[11px] font-semibold uppercase text-teal-800 block">Cobertura Agrícola</span>
+            <span id="concl-plots-count" class="text-base font-extrabold text-teal-900 mt-0.5 block">85 Parcelas Familiares</span>
+            <span class="text-xs text-teal-700">Basado en 81.25 L/parcela de reserva</span>
+          </div>
+          <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-200">
+            <span class="text-[11px] font-semibold uppercase text-slate-700 block">Método Ganador</span>
+            <span class="text-base font-extrabold text-slate-900 mt-0.5 block">Runge-Kutta 4 (RK4)</span>
+            <span id="concl-winner-detail" class="text-xs text-slate-600">Error &lt; 0.001% en todo el intervalo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conclusiones Numéricas y Limitaciones del Modelo -->
+      <div class="lg:col-span-5 bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4 flex flex-col justify-between">
+        <div class="space-y-3">
+          <div class="flex items-center gap-2 text-indigo-700 font-bold text-xs uppercase tracking-wider">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+            <span>Justificación Numérica y Limitaciones</span>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900">
+            Desempeño Heun vs RK4 y Alcance del Modelo
+          </h3>
+
+          <div class="space-y-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
+            <p id="numerical-justification-text">
+              <!-- Populated dynamically by JS -->
+            </p>
+            <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1.5 text-xs text-slate-700">
+              <strong class="text-amber-950 block">⚠️ Limitaciones del Modelo Matemático:</strong>
+              <ul class="list-disc list-inside space-y-1">
+                <li><strong>Estacionalidad climática:</strong> El modelo asume un flujo de entrada constante <span class="math-box">I</span>; en la realidad, las lluvias en La Paz presentan variabilidad estocástica semanal.</li>
+                <li><strong>Evaporación y temperatura:</strong> El coeficiente <span class="math-box">k</span> se modela constante, sin incorporar fluctuaciones por radiación solar altiplánica ni heladas nocturnas.</li>
+                <li><strong>Límite físico de rebalse:</strong> Si la cisterna física tuviese un tope menor a <span class="math-box">y_eq = I/k</span>, la EDO requeriría una condición de saturación por tramos <span class="math-box">min(y(t), V_max)</span>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-slate-900 text-slate-200 text-xs flex items-center justify-between gap-3">
+          <div>
+            <span class="text-emerald-400 font-bold block">Verificación de Calidad Académica</span>
+            <span>Parámetros declarados, PVI verificado por sustitución y análisis en 2 tamaños de paso.</span>
+          </div>
+          <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold shrink-0">100%</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 mt-10 text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <strong class="text-white">EcoHuerto La Paz · Simulación Numérica de EDO de Primer Orden</strong>
+        <p class="text-slate-400 mt-0.5">Desarrollado por <span class="text-emerald-400 font-semibold">Joseph Lima Ramos</span> · Ingeniería de Sistemas (UMSA) · Materia: Métodos Numéricos (2026)</p>
+      </div>
+      <div class="flex items-center gap-3 font-mono text-[11px]">
+        <span class="px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Heun (RK2)</span>
+        <span class="px-2.5 py-1 rounded bg-slate-800 text-emerald-300 border border-slate-700">Runge-Kutta 4 (RK4)</span>
+        <span class="px-2.5 py-1 rounded bg-slate-800 text-cyan-300 border border-slate-700">Solución Analítica</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT SIMULATION ENGINE -->
+  <script>
+    // ============================================================================
+    // ESTADO GLOBAL DE LA APLICACIÓN
+    // ============================================================================
+    let simState = {
+      y0: 1200,
+      I: 1800,
+      k: 0.25,
+      meta: 6500,
+      T: 12,
+      h1: 1.0,
+      h2: 2.0,
+      activeTableMode: 'h1', // 'h1' o 'h2'
+      selectedStepIndex: 1,  // Fila seleccionada para el inspector de pendientes
+      resultsH1: [],
+      resultsH2: [],
+      summaryH1: {},
+      summaryH2: {}
+    };
+
+    // Instancias de gráficas Chart.js
+    let trajectoryChartInstance = null;
+    let errorChartInstance = null;
+
+    // ============================================================================
+    // DEFINICIÓN MATEMÁTICA DEL MODELO EDO: dy/dt = f(t, y) = I - k * y
+    // ============================================================================
+    function fODE(t, y, I, k) {
+      return I - k * y;
+    }
+
+    // Solución Analítica Exacta: y(t) = (I/k) + (y0 - I/k) * exp(-k * t)
+    function exactSolution(t, y0, I, k) {
+      const yEq = I / k;
+      return yEq + (y0 - yEq) * Math.exp(-k * t);
+    }
+
+    // ============================================================================
+    // SOLUCIONADOR NUMÉRICO PARA UN TAMAÑO DE PASO h (HEUN + RK4 + ERRORES)
+    // ============================================================================
+    function solveNumericalGrid(y0, I, k, T, h) {
+      const steps = [];
+      // Número de pasos asegurando cubrir hasta T limpiamente
+      const N = Math.max(1, Math.round(T / h));
+      let t = 0.0;
+      let yHeun = y0;
+      let yRK4 = y0;
+
+      // Paso n = 0 (Condición Inicial)
+      steps.push({
+        n: 0,
+        t: 0.0,
+        hUsed: 0.0,
+        yExact: y0,
+        yHeun: y0,
+        errAbsHeun: 0.0,
+        errRelHeun: 0.0,
+        yRK4: y0,
+        errAbsRK4: 0.0,
+        errRelRK4: 0.0,
+        details: null
+      });
+
+      let maxAbsHeun = 0, maxRelHeun = 0;
+      let maxAbsRK4 = 0, maxRelRK4 = 0;
+      let sumRelHeun = 0, sumRelRK4 = 0;
+
+      // Iteraciones para n = 1, 2, ..., N
+      let currentT = 0.0;
+      let stepIndex = 0;
+
+      while (currentT < T - 1e-12 && stepIndex < 5000) {
+        stepIndex++;
+        // Ajuste limpio si el último paso no divide exactamente a T
+        let dt = h;
+        if (currentT + dt > T) {
+          dt = T - currentT;
+        }
+        const nextT = Number((currentT + dt).toFixed(10));
+
+        const prevYHeun = yHeun;
+        const prevYRK4 = yRK4;
+
+        // 1. Método de Heun (RK2 Predictor-Corrector)
+        const heun_k1 = fODE(currentT, prevYHeun, I, k);
+        const heun_yPred = prevYHeun + dt * heun_k1;
+        const heun_k2 = fODE(nextT, heun_yPred, I, k);
+        yHeun = prevYHeun + (dt / 2.0) * (heun_k1 + heun_k2);
+
+        // 2. Método Clásico de Runge-Kutta de 4.º Orden (RK4)
+        const rk4_k1 = fODE(currentT, prevYRK4, I, k);
+        const rk4_k2 = fODE(currentT + dt / 2.0, prevYRK4 + (dt / 2.0) * rk4_k1, I, k);
+        const rk4_k3 = fODE(currentT + dt / 2.0, prevYRK4 + (dt / 2.0) * rk4_k2, I, k);
+        const rk4_k4 = fODE(nextT, prevYRK4 + dt * rk4_k3, I, k);
+        yRK4 = prevYRK4 + (dt / 6.0) * (rk4_k1 + 2.0 * rk4_k2 + 2.0 * rk4_k3 + rk4_k4);
+
+        // 3. Solución Analítica Exacta en t_{n}
+        const yEx = exactSolution(nextT, y0, I, k);
+
+        // 4. Cálculo de Errores Absoluto y Relativo Porcentual
+        const errAbsHeun = Math.abs(yEx - yHeun);
+        const errRelHeun = Math.abs(yEx) > 1e-12 ? (errAbsHeun / Math.abs(yEx)) * 100.0 : 0.0;
+
+        const errAbsRK4 = Math.abs(yEx - yRK4);
+        const errRelRK4 = Math.abs(yEx) > 1e-12 ? (errAbsRK4 / Math.abs(yEx)) * 100.0 : 0.0;
+
+        if (errAbsHeun > maxAbsHeun) maxAbsHeun = errAbsHeun;
+        if (errRelHeun > maxRelHeun) maxRelHeun = errRelHeun;
+        if (errAbsRK4 > maxAbsRK4) maxAbsRK4 = errAbsRK4;
+        if (errRelRK4 > maxRelRK4) maxRelRK4 = errRelRK4;
+
+        sumRelHeun += errRelHeun;
+        sumRelRK4 += errRelRK4;
+
+        steps.push({
+          n: stepIndex,
+          t: nextT,
+          hUsed: dt,
+          yExact: yEx,
+          yHeun: yHeun,
+          errAbsHeun: errAbsHeun,
+          errRelHeun: errRelHeun,
+          yRK4: yRK4,
+          errAbsRK4: errAbsRK4,
+          errRelRK4: errRelRK4,
+          details: {
+            tPrev: currentT,
+            tNext: nextT,
+            dt: dt,
+            prevYHeun: prevYHeun,
+            heun_k1: heun_k1,
+            heun_yPred: heun_yPred,
+            heun_k2: heun_k2,
+            prevYRK4: prevYRK4,
+            rk4_k1: rk4_k1,
+            rk4_k2: rk4_k2,
+            rk4_k3: rk4_k3,
+            rk4_k4: rk4_k4
+          }
+        });
+
+        currentT = nextT;
+      }
+
+      const lastStep = steps[steps.length - 1];
+      const summary = {
+        h: h,
+        numSteps: steps.length - 1,
+        finalExact: lastStep.yExact,
+        finalHeun: lastStep.yHeun,
+        finalRK4: lastStep.yRK4,
+        finalErrAbsHeun: lastStep.errAbsHeun,
+        finalErrRelHeun: lastStep.errRelHeun,
+        finalErrAbsRK4: lastStep.errAbsRK4,
+        finalErrRelRK4: lastStep.errRelRK4,
+        maxAbsHeun: maxAbsHeun,
+        maxRelHeun: maxRelHeun,
+        maxAbsRK4: maxAbsRK4,
+        maxRelRK4: maxRelRK4,
+        meanRelHeun: steps.length > 1 ? sumRelHeun / (steps.length - 1) : 0,
+        meanRelRK4: steps.length > 1 ? sumRelRK4 / (steps.length - 1) : 0
+      };
+
+      return { steps, summary };
+    }
+
+    // ============================================================================
+    // VALIDACIÓN DE ENTRADAS Y EJECUCIÓN PRINCIPAL
+    // ============================================================================
+    function validateInputs() {
+      const y0 = parseFloat(document.getElementById('input-y0').value);
+      const I = parseFloat(document.getElementById('input-I').value);
+      const k = parseFloat(document.getElementById('input-k').value);
+      const meta = parseFloat(document.getElementById('input-meta').value);
+      const T = parseFloat(document.getElementById('input-T').value);
+      const h1 = parseFloat(document.getElementById('input-h1').value);
+      const h2 = parseFloat(document.getElementById('input-h2').value);
+
+      const banner = document.getElementById('validation-banner');
+      const msg = document.getElementById('validation-message');
+
+      const errors = [];
+      if (isNaN(y0) || y0 < 0) errors.push('La reserva inicial y₀ debe ser un número mayor o igual a 0 L.');
+      if (isNaN(I) || I <= 0) errors.push('La tasa de captación I debe ser estrictamente positiva (I > 0 L/semana).');
+      if (isNaN(k) || k <= 0 || k > 10) errors.push('El coeficiente k debe estar en el rango (0, 10] 1/semana.');
+      if (isNaN(meta) || meta <= 0) errors.push('La meta comunitaria y_meta debe ser mayor a 0 L.');
+      if (isNaN(T) || T <= 0 || T > 200) errors.push('El horizonte temporal T debe ser mayor a 0 y menor o igual a 200 semanas.');
+      if (isNaN(h1) || h1 <= 0 || h1 > T) errors.push('El tamaño de paso h₁ debe cumplir 0 < h₁ ≤ T.');
+      if (isNaN(h2) || h2 <= 0 || h2 > T) errors.push('El tamaño de paso h₂ debe cumplir 0 < h₂ ≤ T.');
+
+      if (errors.length > 0) {
+        banner.classList.remove('hidden');
+        msg.textContent = errors.join(' ');
+        return null;
+      }
+
+      banner.classList.add('hidden');
+      return { y0, I, k, meta, T, h1, h2 };
+    }
+
+    function runSimulation() {
+      const params = validateInputs();
+      if (!params) return;
+
+      simState.y0 = params.y0;
+      simState.I = params.I;
+      simState.k = params.k;
+      simState.meta = params.meta;
+      simState.T = params.T;
+      simState.h1 = params.h1;
+      simState.h2 = params.h2;
+
+      // Resolver mallas numéricas para h1 y h2
+      const sol1 = solveNumericalGrid(params.y0, params.I, params.k, params.T, params.h1);
+      const sol2 = solveNumericalGrid(params.y0, params.I, params.k, params.T, params.h2);
+
+      simState.resultsH1 = sol1.steps;
+      simState.summaryH1 = sol1.summary;
+      simState.resultsH2 = sol2.steps;
+      simState.summaryH2 = sol2.summary;
+
+      // Asegurar que el paso seleccionado para el inspector exista
+      const activeSteps = simState.activeTableMode === 'h1' ? simState.resultsH1 : simState.resultsH2;
+      if (simState.selectedStepIndex >= activeSteps.length || simState.selectedStepIndex < 1) {
+        simState.selectedStepIndex = 1;
+      }
+
+      // Actualizar todas las vistas de la interfaz
+      updateHeaderAndEquations();
+      updateKPICardsAndTank();
+      updateCharts();
+      renderStepComparisonTable();
+      renderIterationTable();
+      renderStepInspector(simState.selectedStepIndex);
+      renderCommunityConclusions();
+    }
+
+    // ============================================================================
+    // ACTUALIZACIÓN DE FÓRMULAS ANALÍTICAS Y VERIFICACIÓN POR SUSTITUCIÓN
+    // ============================================================================
+    function updateHeaderAndEquations() {
+      const { y0, I, k, meta, T, h1, h2 } = simState;
+      const yEq = I / k;
+      const coeff = y0 - yEq;
+      const signStr = coeff >= 0 ? `+ ${coeff.toFixed(2)}` : `- ${Math.abs(coeff).toFixed(2)}`;
+
+      document.getElementById('hero-meta-text').textContent = `${meta.toFixed(0)} L`;
+      document.getElementById('hero-horizon-text').textContent = `${T} semanas`;
+
+      document.getElementById('dynamic-ode-string').textContent = `dy/dt = ${I} - ${k}·y(t)`;
+      document.getElementById('dynamic-ic-string').textContent = `y(0) = ${y0} L , t ∈ [0, ${T}]`;
+
+      document.getElementById('analytic-formula-current').textContent =
+        `y(t) = ${yEq.toFixed(2)} ${signStr}·e^(-${k}·t)`;
+
+      document.getElementById('verify-ic-numeric').textContent =
+        `y(0) = ${yEq.toFixed(2)} + (${y0.toFixed(2)} - ${yEq.toFixed(2)})·(1) = ${y0.toFixed(2)} L ✓`;
+
+      // Verificación numérica de MI = MD en t = T/2
+      const tTest = T / 2.0;
+      const yTest = exactSolution(tTest, y0, I, k);
+      const lhsDerivative = -k * (y0 - yEq) * Math.exp(-k * tTest);
+      const rhsODE = I - k * yTest;
+
+      document.getElementById('verify-ode-numeric').textContent =
+        `En t=${tTest.toFixed(1)} sem: MI = ${lhsDerivative.toFixed(4)} L/sem = MD (${rhsODE.toFixed(4)}) ✓`;
+
+      document.getElementById('lbl-btn-h1').textContent = h1;
+      document.getElementById('lbl-btn-h2').textContent = h2;
+    }
+
+    // ============================================================================
+    // ACTUALIZACIÓN DE TARJETAS KPI Y CISTERNA VISUAL
+    // ============================================================================
+    function updateKPICardsAndTank() {
+      const { y0, I, k, meta, T } = simState;
+      const s1 = simState.summaryH1;
+      const yEq = I / k;
+      const yFinalExact = s1.finalExact;
+
+      document.getElementById('kpi-exact-T').textContent = `${yFinalExact.toFixed(2)} L`;
+      document.getElementById('kpi-eq-sub').textContent = `Equilibrio I/k = ${yEq.toFixed(2)} L`;
+
+      // Cálculo analítico de t* para alcanzar y_meta
+      let tStarText = 'No alcanzable';
+      let tStarSub = '';
+      let goalReachedInHorizon = false;
+      let tStarVal = null;
+
+      if (y0 >= meta) {
+        tStarText = '0.00 sem';
+        tStarSub = 'Meta ya cubierta en t = 0';
+        goalReachedInHorizon = true;
+        tStarVal = 0;
+      } else if (yEq <= meta) {
+        tStarText = '∞ (No alcanza)';
+        tStarSub = `Equilibrio (${yEq.toFixed(0)} L) ≤ Meta`;
+        goalReachedInHorizon = false;
+      } else {
+        tStarVal = -(1.0 / k) * Math.log((meta - yEq) / (y0 - yEq));
+        if (tStarVal <= T) {
+          goalReachedInHorizon = true;
+          const wholeWeeks = Math.floor(tStarVal);
+          const remDays = ((tStarVal - wholeWeeks) * 7).toFixed(1);
+          tStarText = `${tStarVal.toFixed(2)} sem`;
+          tStarSub = `≈ ${wholeWeeks} sem y ${remDays} días (Lograda)`;
+        } else {
+          goalReachedInHorizon = false;
+          tStarText = `${tStarVal.toFixed(2)} sem`;
+          tStarSub = `Requiere > ${T} semanas (Falta tiempo)`;
+        }
+      }
+
+      document.getElementById('kpi-tstar').textContent = tStarText;
+      document.getElementById('kpi-tstar-sub').textContent = tStarSub;
+
+      // Errores de Heun y RK4 en h1
+      document.getElementById('kpi-err-heun').textContent = `${s1.maxAbsHeun.toFixed(4)} L`;
+      document.getElementById('kpi-err-heun-rel').textContent = `Error Rel. Máx: ${s1.maxRelHeun.toFixed(6)}%`;
+
+      document.getElementById('kpi-err-rk4').textContent = `${s1.maxAbsRK4.toFixed(4)} L`;
+      document.getElementById('kpi-err-rk4-rel').textContent = `Error Rel. Máx: ${s1.maxRelRK4.toFixed(6)}%`;
+
+      const ratio = s1.maxAbsRK4 > 1e-14 ? (s1.maxAbsHeun / s1.maxAbsRK4) : 9999;
+      document.getElementById('kpi-ratio-advantage').textContent = `${ratio.toFixed(1)}×`;
+
+      // Actualizar gráfico visual de la cisterna en el Hero
+      const maxScaleVol = Math.max(yEq, meta, y0, yFinalExact) * 1.08;
+      const fillPct = Math.min(96, Math.max(8, (yFinalExact / maxScaleVol) * 100));
+      const goalLinePct = Math.min(94, Math.max(6, (meta / maxScaleVol) * 100));
+
+      document.getElementById('tank-water-fill').style.height = `${fillPct.toFixed(1)}%`;
+      document.getElementById('tank-goal-line').style.bottom = `${goalLinePct.toFixed(1)}%`;
+      document.getElementById('tank-eq-label').textContent = yEq.toFixed(0);
+      document.getElementById('tank-meta-label').textContent = meta.toFixed(0);
+      document.getElementById('tank-current-vol').textContent = `${yFinalExact.toFixed(0)} L`;
+      document.getElementById('tank-current-pct').textContent = `${((yFinalExact / yEq) * 100).toFixed(1)}% del eq.`;
+      document.getElementById('tank-init-label').textContent = `${y0.toFixed(0)} L`;
+      document.getElementById('tank-tstar-label').textContent = tStarText;
+
+      const badge = document.getElementById('tank-badge-status');
+      if (goalReachedInHorizon) {
+        badge.textContent = '✓ Meta Alcanzada';
+        badge.className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30';
+      } else {
+        badge.textContent = '⚠ Meta No Alcanzada';
+        badge.className = 'px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30';
+      }
+    }
+
+    // ============================================================================
+    // RENDERIZADO DE GRÁFICAS INTERACTIVAS CON CHART.JS
+    // ============================================================================
+    function updateCharts() {
+      const { y0, I, k, meta, T, h1, h2, resultsH1, resultsH2 } = simState;
+      const yEq = I / k;
+
+      // Generar curva analítica suave (120 puntos)
+      const densePoints = [];
+      const metaLinePoints = [];
+      const eqLinePoints = [];
+      const numDense = 120;
+      for (let i = 0; i <= numDense; i++) {
+        const tVal = (T * i) / numDense;
+        densePoints.push({ x: tVal, y: exactSolution(tVal, y0, I, k) });
+        metaLinePoints.push({ x: tVal, y: meta });
+        eqLinePoints.push({ x: tVal, y: yEq });
+      }
+
+      const heunH1Pts = resultsH1.map(r => ({ x: r.t, y: r.yHeun }));
+      const rk4H1Pts = resultsH1.map(r => ({ x: r.t, y: r.yRK4 }));
+      const heunH2Pts = resultsH2.map(r => ({ x: r.t, y: r.yHeun }));
+      const rk4H2Pts = resultsH2.map(r => ({ x: r.t, y: r.yRK4 }));
+
+      const ctx1 = document.getElementById('chartTrajectory').getContext('2d');
+      if (trajectoryChartInstance) {
+        trajectoryChartInstance.destroy();
+      }
+
+      trajectoryChartInstance = new Chart(ctx1, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Solución Analítica Exacta',
+              data: densePoints,
+              showLine: true,
+              borderColor: '#059669',
+              backgroundColor: 'rgba(5, 150, 105, 0.1)',
+              borderWidth: 3,
+              pointRadius: 0,
+              tension: 0.25
+            },
+            {
+              label: `RK4 (h₁ = ${h1} sem)`,
+              data: rk4H1Pts,
+              showLine: true,
+              borderColor: '#0d9488',
+              backgroundColor: '#0d9488',
+              borderWidth: 2,
+              pointRadius: 4,
+              pointStyle: 'rectRot'
+            },
+            {
+              label: `Heun (h₁ = ${h1} sem)`,
+              data: heunH1Pts,
+              showLine: true,
+              borderColor: '#d97706',
+              backgroundColor: '#f59e0b',
+              borderWidth: 2,
+              borderDash: [4, 3],
+              pointRadius: 4,
+              pointStyle: 'circle'
+            },
+            {
+              label: `Heun (h₂ = ${h2} sem)`,
+              data: heunH2Pts,
+              showLine: true,
+              borderColor: '#e11d48',
+              backgroundColor: '#f43f5e',
+              borderWidth: 1.8,
+              borderDash: [2, 2],
+              pointRadius: 4.5,
+              pointStyle: 'triangle'
+            },
+            {
+              label: `Meta Comunitaria (${meta} L)`,
+              data: metaLinePoints,
+              showLine: true,
+              borderColor: '#f59e0b',
+              borderWidth: 2,
+              borderDash: [8, 4],
+              pointRadius: 0,
+              fill: false
+            },
+            {
+              label: `Equilibrio Asintótico (${yEq.toFixed(0)} L)`,
+              data: eqLinePoints,
+              showLine: true,
+              borderColor: '#64748b',
+              borderWidth: 1.5,
+              borderDash: [3, 4],
+              pointRadius: 0,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'nearest', intersect: false },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { font: { family: 'Inter', size: 11 }, usePointStyle: true }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return `${ctx.dataset.label}: t = ${ctx.parsed.x.toFixed(2)} sem → y = ${ctx.parsed.y.toFixed(4)} L`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min: 0,
+              max: T,
+              title: { display: true, text: 'Tiempo t (semanas)', font: { weight: 'bold', size: 12 } }
+            },
+            y: {
+              title: { display: true, text: 'Volumen de Agua y(t) [Litros]', font: { weight: 'bold', size: 12 } }
+            }
+          }
+        }
+      });
+
+      updateErrorChart();
+    }
+
+    function updateErrorChart() {
+      const { T, h1, h2, resultsH1, resultsH2 } = simState;
+      const metric = document.getElementById('error-metric-select').value; // 'rel' o 'abs'
+      const scaleType = document.getElementById('error-scale-select').value; // 'logarithmic' o 'linear'
+
+      // Para escala logarítmica omitimos n=0 (donde el error es 0 exacto) y ponemos un piso mínimo 1e-12
+      const filterMap = (arr, key) =>
+        arr
+          .filter(r => r.n > 0)
+          .map(r => ({
+            x: r.t,
+            y: scaleType === 'logarithmic' ? Math.max(1e-10, r[key]) : r[key]
+          }));
+
+      const keyHeun = metric === 'rel' ? 'errRelHeun' : 'errAbsHeun';
+      const keyRK4 = metric === 'rel' ? 'errRelRK4' : 'errAbsRK4';
+
+      const ctx2 = document.getElementById('chartError').getContext('2d');
+      if (errorChartInstance) {
+        errorChartInstance.destroy();
+      }
+
+      errorChartInstance = new Chart(ctx2, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: `Heun (h₁ = ${h1} sem)`,
+              data: filterMap(resultsH1, keyHeun),
+              showLine: true,
+              borderColor: '#d97706',
+              backgroundColor: '#f59e0b',
+              borderWidth: 2.2,
+              pointRadius: 4
+            },
+            {
+              label: `Heun (h₂ = ${h2} sem)`,
+              data: filterMap(resultsH2, keyHeun),
+              showLine: true,
+              borderColor: '#e11d48',
+              backgroundColor: '#f43f5e',
+              borderWidth: 2,
+              borderDash: [4, 3],
+              pointRadius: 4.5,
+              pointStyle: 'triangle'
+            },
+            {
+              label: `RK4 (h₁ = ${h1} sem)`,
+              data: filterMap(resultsH1, keyRK4),
+              showLine: true,
+              borderColor: '#0d9488',
+              backgroundColor: '#14b8a6',
+              borderWidth: 2.2,
+              pointRadius: 4,
+              pointStyle: 'rectRot'
+            },
+            {
+              label: `RK4 (h₂ = ${h2} sem)`,
+              data: filterMap(resultsH2, keyRK4),
+              showLine: true,
+              borderColor: '#4f46e5',
+              backgroundColor: '#6366f1',
+              borderWidth: 2,
+              borderDash: [4, 3],
+              pointRadius: 4.5,
+              pointStyle: 'rect'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'nearest', intersect: false },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { font: { family: 'Inter', size: 11 }, usePointStyle: true }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const unit = metric === 'rel' ? '%' : 'L';
+                  return `${ctx.dataset.label}: t=${ctx.parsed.x.toFixed(2)} sem → Error = ${ctx.parsed.y.toExponential(4)} ${unit}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min: 0,
+              max: T,
+              title: { display: true, text: 'Tiempo t (semanas)', font: { weight: 'bold', size: 12 } }
+            },
+            y: {
+              type: scaleType,
+              title: {
+                display: true,
+                text: metric === 'rel' ? 'Error Relativo Porcentual (%)' : 'Error Absoluto (Litros)',
+                font: { weight: 'bold', size: 12 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // ============================================================================
+    // TABLA COMPARATIVA DE TAMAÑOS DE PASO (h1 vs h2)
+    // ============================================================================
+    function renderStepComparisonTable() {
+      const { h1, h2, summaryH1: s1, summaryH2: s2 } = simState;
+
+      document.getElementById('th-step1').textContent = `Paso Principal h₁ = ${h1} sem`;
+      document.getElementById('th-step2').textContent = `Paso Comparativo h₂ = ${h2} sem`;
+
+      const ratioHeun = s1.maxAbsHeun > 1e-14 ? (s2.maxAbsHeun / s1.maxAbsHeun).toFixed(2) + '×' : 'N/A';
+      const ratioRK4 = s1.maxAbsRK4 > 1e-14 ? (s2.maxAbsRK4 / s1.maxAbsRK4).toFixed(2) + '×' : 'N/A';
+
+      const rows = [
+        {
+          label: 'Número total de pasos (N = T/h)',
+          v1: `${s1.numSteps} iteraciones`,
+          v2: `${s2.numSteps} iteraciones`,
+          note: 'Menor paso h implica más evaluaciones de f(t,y)'
+        },
+        {
+          label: 'Volumen Exacto Analítico en t = T',
+          v1: `${s1.finalExact.toFixed(6)} L`,
+          v2: `${s2.finalExact.toFixed(6)} L`,
+          note: 'Referencia teórica exacta y(T)'
+        },
+        {
+          label: 'Volumen Aproximado Heun (RK2) en t = T',
+          v1: `${s1.finalHeun.toFixed(6)} L`,
+          v2: `${s2.finalHeun.toFixed(6)} L`,
+          note: 'Aproximación de 2.º orden en el horizonte final'
+        },
+        {
+          label: 'Error Absoluto Máximo — Método de Heun',
+          v1: `${s1.maxAbsHeun.toFixed(6)} L`,
+          v2: `${s2.maxAbsHeun.toFixed(6)} L`,
+          note: `Razón de cambio (h₂/h₁): ${ratioHeun} (Orden ~ O(h²))`
+        },
+        {
+          label: 'Error Relativo Porcentual Máximo — Heun (%)',
+          v1: `${s1.maxRelHeun.toFixed(6)} %`,
+          v2: `${s2.maxRelHeun.toFixed(6)} %`,
+          note: 'Porcentaje máximo de desviación respecto a y(t)'
+        },
+        {
+          label: 'Volumen Aproximado RK4 en t = T',
+          v1: `${s1.finalRK4.toFixed(6)} L`,
+          v2: `${s2.finalRK4.toFixed(6)} L`,
+          note: 'Aproximación de 4.º orden prácticamente exacta'
+        },
+        {
+          label: 'Error Absoluto Máximo — Método RK4',
+          v1: `${s1.maxAbsRK4.toFixed(6)} L`,
+          v2: `${s2.maxAbsRK4.toFixed(6)} L`,
+          note: `Razón de cambio (h₂/h₁): ${ratioRK4} (Orden ~ O(h⁴))`
+        },
+        {
+          label: 'Error Relativo Porcentual Máximo — RK4 (%)',
+          v1: `${s1.maxRelRK4.toFixed(6)} %`,
+          v2: `${s2.maxRelRK4.toFixed(6)} %`,
+          note: 'Precisión superior incluso con tamaño de paso grande'
+        }
+      ];
+
+      const tbody = document.getElementById('step-comparison-tbody');
+      tbody.innerHTML = rows.map((r, idx) => `
+        <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} hover:bg-emerald-50/40 transition">
+          <td class="py-2.5 px-4 font-sans font-semibold text-slate-800">${r.label}</td>
+          <td class="py-2.5 px-4 text-emerald-800 font-semibold">${r.v1}</td>
+          <td class="py-2.5 px-4 text-indigo-800 font-semibold">${r.v2}</td>
+          <td class="py-2.5 px-4 font-sans text-slate-600">${r.note}</td>
+        </tr>
+      `).join('');
+    }
+
+    // ============================================================================
+    // TABLA DE ITERACIONES PASO A PASO E INSPECTOR DE PENDIENTES (k1..k4)
+    // ============================================================================
+    function setTableStepMode(mode) {
+      simState.activeTableMode = mode;
+      simState.selectedStepIndex = 1;
+
+      const btn1 = document.getElementById('btn-table-h1');
+      const btn2 = document.getElementById('btn-table-h2');
+
+      if (mode === 'h1') {
+        btn1.className = 'px-3 py-1.5 rounded-md text-xs font-bold bg-emerald-600 text-white shadow-sm transition';
+        btn2.className = 'px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:text-slate-900 transition';
+      } else {
+        btn2.className = 'px-3 py-1.5 rounded-md text-xs font-bold bg-indigo-600 text-white shadow-sm transition';
+        btn1.className = 'px-3 py-1.5 rounded-md text-xs font-bold text-slate-700 hover:text-slate-900 transition';
+      }
+
+      renderIterationTable();
+      renderStepInspector(simState.selectedStepIndex);
+    }
+
+    function selectStepRow(nIndex) {
+      if (nIndex === 0) nIndex = 1;
+      simState.selectedStepIndex = nIndex;
+      renderIterationTable();
+      renderStepInspector(nIndex);
+    }
+
+    function renderStepInspector(nIndex) {
+      const steps = simState.activeTableMode === 'h1' ? simState.resultsH1 : simState.resultsH2;
+      const step = steps[nIndex] || steps[1];
+      const container = document.getElementById('inspector-content');
+
+      if (!step || !step.details) {
+        container.innerHTML = `<div class="col-span-2 text-slate-400">Condición inicial en n = 0. Selecciona un paso n ≥ 1.</div>`;
+        return;
+      }
+
+      const d = step.details;
+      document.getElementById('inspector-badge').textContent = `Inspector de Iteración: Paso n = ${step.n}`;
+      document.getElementById('inspector-subtitle').textContent =
+        `Transición desde t_${step.n - 1} = ${d.tPrev.toFixed(2)} sem hacia t_${step.n} = ${d.tNext.toFixed(2)} sem (h = ${d.dt.toFixed(2)} sem)`;
+
+      container.innerHTML = `
+        <div class="bg-slate-800/90 p-3.5 rounded-xl border border-amber-500/30 space-y-1.5">
+          <div class="text-amber-300 font-bold font-sans flex justify-between">
+            <span>Desglose Método de Heun (RK2) en paso n = ${step.n}</span>
+            <span>y_${step.n - 1} = ${d.prevYHeun.toFixed(4)} L</span>
+          </div>
+          <div>k₁ = f(${d.tPrev.toFixed(2)}, ${d.prevYHeun.toFixed(4)}) = <span class="text-white font-semibold">${d.heun_k1.toFixed(6)} L/sem</span></div>
+          <div>y* = ${d.prevYHeun.toFixed(4)} + (${d.dt.toFixed(2)})·(${d.heun_k1.toFixed(4)}) = <span class="text-white font-semibold">${d.heun_yPred.toFixed(6)} L</span></div>
+          <div>k₂ = f(${d.tNext.toFixed(2)}, ${d.heun_yPred.toFixed(4)}) = <span class="text-white font-semibold">${d.heun_k2.toFixed(6)} L/sem</span></div>
+          <div class="pt-1 border-t border-slate-700 text-amber-300 font-bold">
+            y_${step.n} (Heun) = ${step.yHeun.toFixed(6)} L &nbsp;|&nbsp; Error Abs = ${step.errAbsHeun.toFixed(6)} L
+          </div>
+        </div>
+
+        <div class="bg-slate-800/90 p-3.5 rounded-xl border border-teal-500/30 space-y-1.5">
+          <div class="text-teal-300 font-bold font-sans flex justify-between">
+            <span>Desglose Runge-Kutta 4 (RK4) en paso n = ${step.n}</span>
+            <span>y_${step.n - 1} = ${d.prevYRK4.toFixed(4)} L</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1">
+            <div>k₁ = <span class="text-white font-semibold">${d.rk4_k1.toFixed(6)}</span></div>
+            <div>k₂ = <span class="text-white font-semibold">${d.rk4_k2.toFixed(6)}</span></div>
+            <div>k₃ = <span class="text-white font-semibold">${d.rk4_k3.toFixed(6)}</span></div>
+            <div>k₄ = <span class="text-white font-semibold">${d.rk4_k4.toFixed(6)}</span></div>
+          </div>
+          <div class="pt-1 border-t border-slate-700 text-teal-300 font-bold">
+            y_${step.n} (RK4) = ${step.yRK4.toFixed(6)} L &nbsp;|&nbsp; Error Abs = ${step.errAbsRK4.toFixed(6)} L
+          </div>
+        </div>
+      `;
+    }
+
+    function renderIterationTable() {
+      const decimals = parseInt(document.getElementById('decimal-select').value, 10) || 6;
+      const steps = simState.activeTableMode === 'h1' ? simState.resultsH1 : simState.resultsH2;
+      const tbody = document.getElementById('iteration-tbody');
+
+      tbody.innerHTML = steps.map(row => {
+        const isSelected = row.n === simState.selectedStepIndex;
+        const rowClass = isSelected
+          ? 'bg-emerald-100/80 font-semibold cursor-pointer'
+          : 'hover:bg-slate-100 cursor-pointer transition';
+
+        return `
+          <tr onclick="selectStepRow(${row.n})" class="${rowClass}">
+            <td class="py-2.5 px-3 text-center font-bold text-slate-900">${row.n}</td>
+            <td class="py-2.5 px-3">${row.t.toFixed(2)}</td>
+            <td class="py-2.5 px-3 bg-emerald-50/40 font-bold text-emerald-900">${row.yExact.toFixed(decimals)}</td>
+            <td class="py-2.5 px-3 bg-amber-50/40 text-amber-950">${row.yHeun.toFixed(decimals)}</td>
+            <td class="py-2.5 px-3 text-amber-800">${row.errAbsHeun.toFixed(decimals)}</td>
+            <td class="py-2.5 px-3 text-amber-800">${row.errRelHeun.toFixed(decimals)}%</td>
+            <td class="py-2.5 px-3 bg-teal-50/40 text-teal-950">${row.yRK4.toFixed(decimals)}</td>
+            <td class="py-2.5 px-3 text-teal-800">${row.errAbsRK4.toFixed(decimals)}</td>
+            <td class="py-2.5 px-3 text-teal-800">${row.errRelRK4.toFixed(decimals)}%</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ============================================================================
+    // INTERPRETACIÓN COMUNITARIA Y CONCLUSIONES DINÁMICAS (3f)
+    // ============================================================================
+    function renderCommunityConclusions() {
+      const { y0, I, k, meta, T, h1, h2, summaryH1: s1, summaryH2: s2 } = simState;
+      const yEq = I / k;
+      const finalVol = s1.finalExact;
+      const plotsSupported = Math.floor(finalVol / 81.25); // 6500 L -> 80 parcelas (81.25 L/parcela)
+
+      const box = document.getElementById('community-interpretation-box');
+      const statusEl = document.getElementById('concl-goal-status');
+      const detailEl = document.getElementById('concl-goal-detail');
+      const plotsEl = document.getElementById('concl-plots-count');
+
+      plotsEl.textContent = `${plotsSupported} Parcelas Familiares`;
+
+      if (yEq > meta && finalVol >= meta) {
+        const tStar = y0 >= meta ? 0 : -(1.0 / k) * Math.log((meta - yEq) / (y0 - yEq));
+        statusEl.textContent = '✓ Meta Hídrica Lograda';
+        statusEl.className = 'text-base font-extrabold text-emerald-900 mt-0.5 block';
+        detailEl.textContent = `Alcanzada en t* = ${tStar.toFixed(2)} semanas`;
+
+        box.innerHTML = `
+          <p>
+            <strong>1. Respuesta a la pregunta del desafío:</strong> Partiendo de una reserva inicial de <strong>${y0.toFixed(0)} L</strong>, con un ingreso constante de <strong>${I.toFixed(0)} L/semana</strong> y una tasa de uso proporcional de <strong>k = ${k} sem⁻¹</strong>, la cisterna comunitaria de Cotahuma <strong>SÍ alcanza la meta de seguridad hídrica de ${meta.toFixed(0)} L</strong> en exactamente <strong>t* = ${tStar.toFixed(2)} semanas</strong> (antes del límite de ${T} semanas).
+          </p>
+          <p>
+            <strong>2. Impacto directo en el bienestar vecinal:</strong> Al concluir la semana ${T}, el reservorio acumula <strong>${finalVol.toFixed(2)} L</strong> (acercándose a su capacidad de equilibrio estacionario de <strong>${yEq.toFixed(0)} L</strong>). Esto garantiza agua biofiltrada suficiente para ampliar el huerto de 40 a <strong>${plotsSupported} parcelas familiares</strong> de hortalizas, fortaleciendo la seguridad alimentaria de las 60 familias.
+          </p>
+        `;
+      } else {
+        statusEl.textContent = '⚠ Meta No Alcanzada';
+        statusEl.className = 'text-base font-extrabold text-amber-800 mt-0.5 block';
+        detailEl.textContent = `Volumen en t=${T}: ${finalVol.toFixed(0)} L (< ${meta} L)`;
+
+        box.innerHTML = `
+          <p>
+            <strong>1. Respuesta a la pregunta del desafío:</strong> Bajo las condiciones configuradas (<strong>y₀ = ${y0} L, I = ${I} L/sem, k = ${k} sem⁻¹</strong>), la cisterna llega a <strong>${finalVol.toFixed(2)} L</strong> en la semana ${T}, por lo que <strong>NO logra alcanzar el umbral de ${meta.toFixed(0)} L</strong> dentro del horizonte previsto.
+          </p>
+          <p>
+            <strong>2. Recomendación técnica para la comunidad:</strong> Para alcanzar la meta antes de la semana ${T}, la junta vecinal debe incrementar la captación pluvial/vertiente (<span class="math-box">I</span>) o optimizar la eficiencia del riego por goteo reduciendo el coeficiente de pérdidas (<span class="math-box">k</span>).
+          </p>
+        `;
+      }
+
+      const ratio = s1.maxAbsRK4 > 1e-14 ? (s1.maxAbsHeun / s1.maxAbsRK4).toFixed(1) : 'miles de';
+      document.getElementById('numerical-justification-text').innerHTML = `
+        En los ensayos realizados con paso <strong>h₁ = ${h1} sem</strong>, el método de <strong>Runge-Kutta de 4.º orden (RK4)</strong> registró un error absoluto máximo de apenas <strong>${s1.maxAbsRK4.toFixed(5)} L (${s1.maxRelRK4.toFixed(6)}%)</strong>, frente a los <strong>${s1.maxAbsHeun.toFixed(4)} L (${s1.maxRelHeun.toFixed(5)}%)</strong> del método de <strong>Heun (RK2)</strong>. Esto significa que <strong>RK4 es ${ratio} veces más preciso que Heun</strong> para el mismo paso temporal. Además, al pasar de <strong>h₂ = ${h2} sem</strong> a <strong>h₁ = ${h1} sem</strong>, se comprueba que el error global disminuye cuadráticamente en Heun y a la cuarta potencia en RK4.
+      `;
+    }
+
+    // ============================================================================
+    // PRESETS Y EXPORTACIÓN A CSV
+    // ============================================================================
+    function applyPreset(name) {
+      if (name === 'base') {
+        document.getElementById('input-y0').value = 1200;
+        document.getElementById('input-I').value = 1800;
+        document.getElementById('input-k').value = 0.25;
+        document.getElementById('input-meta').value = 6500;
+        document.getElementById('input-T').value = 12;
+        document.getElementById('input-h1').value = 1.0;
+        document.getElementById('input-h2').value = 2.0;
+      } else if (name === 'fino') {
+        document.getElementById('input-y0').value = 1200;
+        document.getElementById('input-I').value = 1800;
+        document.getElementById('input-k').value = 0.25;
+        document.getElementById('input-meta').value = 6500;
+        document.getElementById('input-T').value = 12;
+        document.getElementById('input-h1').value = 0.5;
+        document.getElementById('input-h2').value = 1.0;
+      } else if (name === 'sequia') {
+        document.getElementById('input-y0').value = 1000;
+        document.getElementById('input-I').value = 1450;
+        document.getElementById('input-k').value = 0.25;
+        document.getElementById('input-meta').value = 6500;
+        document.getElementById('input-T').value = 12;
+        document.getElementById('input-h1').value = 1.0;
+        document.getElementById('input-h2').value = 2.0;
+      } else if (name === 'ampliacion') {
+        document.getElementById('input-y0').value = 1500;
+        document.getElementById('input-I').value = 2100;
+        document.getElementById('input-k').value = 0.25;
+        document.getElementById('input-meta').value = 6500;
+        document.getElementById('input-T').value = 12;
+        document.getElementById('input-h1').value = 1.0;
+        document.getElementById('input-h2').value = 2.0;
+      }
+      runSimulation();
+    }
+
+    function exportTableCSV() {
+      const steps = simState.activeTableMode === 'h1' ? simState.resultsH1 : simState.resultsH2;
+      const hUsed = simState.activeTableMode === 'h1' ? simState.h1 : simState.h2;
+
+      const headers = [
+        'Paso_n',
+        'Tiempo_t_semanas',
+        'y_Exacta_L',
+        'y_Heun_L',
+        'Error_Abs_Heun_L',
+        'Error_Rel_Heun_Pct',
+        'y_RK4_L',
+        'Error_Abs_RK4_L',
+        'Error_Rel_RK4_Pct'
+      ];
+
+      const csvRows = [headers.join(',')];
+      steps.forEach(r => {
+        csvRows.push([
+          r.n,
+          r.t.toFixed(4),
+          r.yExact.toFixed(8),
+          r.yHeun.toFixed(8),
+          r.errAbsHeun.toFixed(8),
+          r.errRelHeun.toFixed(8),
+          r.yRK4.toFixed(8),
+          r.errAbsRK4.toFixed(8),
+          r.errRelRK4.toFixed(8)
+        ].join(','));
+      });
+
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `EcoHuerto_EDO_Simulacion_h_${hUsed}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================================================
+    // INICIALIZACIÓN AL CARGAR LA PÁGINA
+    // ============================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      // Escuchar cambios en cualquier input para actualizar en tiempo real
+      const inputIds = ['input-y0', 'input-I', 'input-k', 'input-meta', 'input-T', 'input-h1', 'input-h2'];
+      inputIds.forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          runSimulation();
+        });
+      });
+
+      runSimulation();
+    });
+  </script>
+</body>
+</html>
